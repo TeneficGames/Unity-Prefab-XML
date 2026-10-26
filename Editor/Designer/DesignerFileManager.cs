@@ -484,7 +484,7 @@ namespace UnityPrefabXML.Designer
 
         private static string ModificationKey(PropertyModification mod)
         {
-            return mod.target.GetInstanceID() + "|" + mod.propertyPath;
+            return mod.target.GetEntityId() + "|" + mod.propertyPath;
         }
 
         internal static void BuildParallelMapping(Transform baseTf, Transform variantTf, XElement goElement,
@@ -500,7 +500,7 @@ namespace UnityPrefabXML.Designer
         /// </summary>
         private static void MapBaseToXml(Transform baseTf, XElement goElement, DesignerContext ctx)
         {
-            ctx.GoToXml[baseTf.gameObject.GetInstanceID()] = goElement;
+            ctx.GoToXml[baseTf.gameObject.GetEntityId()] = goElement;
 
             // Match components by type name
             var xmlCompElements = goElement.Elements()
@@ -516,7 +516,7 @@ namespace UnityPrefabXML.Designer
                     if (!usedXmlIndices.Contains(i) &&
                         PrefabXmlUtils.MatchesComponentType(xmlCompElements[i].Name.LocalName, compType))
                     {
-                        ctx.CompToXml[baseComp.GetInstanceID()] = xmlCompElements[i];
+                        ctx.CompToXml[baseComp.GetEntityId()] = xmlCompElements[i];
                         usedXmlIndices.Add(i);
                         break;
                     }
@@ -538,12 +538,12 @@ namespace UnityPrefabXML.Designer
         /// </summary>
         private static void MapBaseToVariant(Transform baseTf, Transform variantTf, DesignerContext ctx)
         {
-            var baseGoId = baseTf.gameObject.GetInstanceID();
+            var baseGoId = baseTf.gameObject.GetEntityId();
             ctx.GoToVariant[baseGoId] = variantTf;
 
             if (ctx.GoToXml.TryGetValue(baseGoId, out var goElement))
             {
-                ctx.VariantToXml[variantTf.GetInstanceID()] = goElement;
+                ctx.VariantToXml[variantTf.GetEntityId()] = goElement;
             }
 
             // Match base components to variant components by type in order
@@ -557,7 +557,7 @@ namespace UnityPrefabXML.Designer
                 {
                     if (!usedVariantIndices.Contains(i) && variantComps[i].GetType() == compType)
                     {
-                        ctx.CompToVariant[baseComp.GetInstanceID()] = variantComps[i];
+                        ctx.CompToVariant[baseComp.GetEntityId()] = variantComps[i];
                         usedVariantIndices.Add(i);
                         break;
                     }
@@ -570,7 +570,7 @@ namespace UnityPrefabXML.Designer
             {
                 var baseChild = baseTf.GetChild(i);
 
-                if (!variantChildren.TryGetValue(baseChild.gameObject.GetInstanceID(), out var variantChild))
+                if (!variantChildren.TryGetValue(baseChild.gameObject.GetEntityId(), out var variantChild))
                 {
                     // The child either was removed in the designer file, or correspondence is not
                     // available at all — in the latter case fall back to matching by index
@@ -590,9 +590,9 @@ namespace UnityPrefabXML.Designer
         /// Returns the children of a designer object keyed by the instance id of the base object each
         /// one was instantiated from. Objects added in the designer file have no source and are skipped.
         /// </summary>
-        private static Dictionary<int, Transform> MapChildrenBySource(Transform variantTf)
+        private static Dictionary<EntityId, Transform> MapChildrenBySource(Transform variantTf)
         {
-            var map = new Dictionary<int, Transform>();
+            var map = new Dictionary<EntityId, Transform>();
 
             for (var i = 0; i < variantTf.childCount; i++)
             {
@@ -600,7 +600,7 @@ namespace UnityPrefabXML.Designer
                 var source = PrefabUtility.GetCorrespondingObjectFromSource(child.gameObject);
                 if (source != null)
                 {
-                    map[source.GetInstanceID()] = child;
+                    map[source.GetEntityId()] = child;
                 }
             }
 
@@ -635,14 +635,14 @@ namespace UnityPrefabXML.Designer
 
         private static void ApplyChildOrder(Transform variantTf, DesignerContext ctx, HashSet<XElement> skipped)
         {
-            if (ctx.VariantToXml.TryGetValue(variantTf.GetInstanceID(), out var goElement) &&
+            if (ctx.VariantToXml.TryGetValue(variantTf.GetEntityId(), out var goElement) &&
                 !skipped.Contains(goElement))
             {
                 var desired = new List<XElement>();
 
                 for (var i = 0; i < variantTf.childCount; i++)
                 {
-                    if (ctx.VariantToXml.TryGetValue(variantTf.GetChild(i).GetInstanceID(), out var childElement))
+                    if (ctx.VariantToXml.TryGetValue(variantTf.GetChild(i).GetEntityId(), out var childElement))
                     {
                         desired.Add(childElement);
                     }
@@ -832,20 +832,20 @@ namespace UnityPrefabXML.Designer
         public GameObject BasePrefab;
         public GameObject DesignerPrefab;
 
-        // Mapping: base instanceID -> XML element / variant counterpart
-        public readonly Dictionary<int, XElement> CompToXml = new Dictionary<int, XElement>();
-        public readonly Dictionary<int, Component> CompToVariant = new Dictionary<int, Component>();
-        public readonly Dictionary<int, XElement> GoToXml = new Dictionary<int, XElement>();
-        public readonly Dictionary<int, Transform> GoToVariant = new Dictionary<int, Transform>();
+        // Mapping: base EntityId -> XML element / variant counterpart
+        public readonly Dictionary<EntityId, XElement> CompToXml = new Dictionary<EntityId, XElement>();
+        public readonly Dictionary<EntityId, Component> CompToVariant = new Dictionary<EntityId, Component>();
+        public readonly Dictionary<EntityId, XElement> GoToXml = new Dictionary<EntityId, XElement>();
+        public readonly Dictionary<EntityId, Transform> GoToVariant = new Dictionary<EntityId, Transform>();
 
-        // Mapping: designer transform instanceID -> XML element, used to reorder the XML
-        public readonly Dictionary<int, XElement> VariantToXml = new Dictionary<int, XElement>();
+        // Mapping: designer transform EntityId -> XML element, used to reorder the XML
+        public readonly Dictionary<EntityId, XElement> VariantToXml = new Dictionary<EntityId, XElement>();
 
         // Bindings
         public readonly Dictionary<string, Object> NewBindings = new Dictionary<string, Object>();
         public readonly HashSet<string> UsedBindingNames = new HashSet<string>();
 
-        public int FindBaseGoIdForVariantGo(GameObject variantGo)
+        public EntityId FindBaseGoIdForVariantGo(GameObject variantGo)
         {
             foreach (var kvp in GoToVariant)
             {
@@ -853,10 +853,10 @@ namespace UnityPrefabXML.Designer
                     return kvp.Key;
             }
 
-            return -1;
+            return EntityId.None;
         }
 
-        public int FindBaseGoIdForVariantTf(Transform variantTf)
+        public EntityId FindBaseGoIdForVariantTf(Transform variantTf)
         {
             foreach (var kvp in GoToVariant)
             {
@@ -864,7 +864,7 @@ namespace UnityPrefabXML.Designer
                     return kvp.Key;
             }
 
-            return -1;
+            return EntityId.None;
         }
 
         public PrefabXmlSerializer.PrefabXmlSerializationContext CreateConvertContext()

@@ -81,13 +81,13 @@ namespace UnityPrefabXML
         }
 
         /// <summary>
-        /// What the layout of the prefab takes over, keyed by the instance id of the RectTransform
+        /// What the layout of the prefab takes over, keyed by the EntityId of the RectTransform
         /// of the prefab itself. Costs a preview scene and a layout pass, so the caller is expected
         /// to ask once and keep the answer.
         /// </summary>
-        public static Dictionary<int, DrivenTransformProperties> MeasureDriven(GameObject prefab)
+        public static Dictionary<EntityId, DrivenTransformProperties> MeasureDriven(GameObject prefab)
         {
-            var map = new Dictionary<int, DrivenTransformProperties>();
+            var map = new Dictionary<EntityId, DrivenTransformProperties>();
 
             if (prefab == null || !Available())
             {
@@ -104,10 +104,10 @@ namespace UnityPrefabXML
         }
 
         /// <summary>What a measurement says about one object, None for one it never reached.</summary>
-        public static DrivenTransformProperties Lookup(Dictionary<int, DrivenTransformProperties> driven,
+        public static DrivenTransformProperties Lookup(Dictionary<EntityId, DrivenTransformProperties> driven,
             Transform source)
         {
-            return driven.TryGetValue(source.GetInstanceID(), out var flags)
+            return driven.TryGetValue(source.GetEntityId(), out var flags)
                 ? flags
                 : DrivenTransformProperties.None;
         }
@@ -134,7 +134,7 @@ namespace UnityPrefabXML
         /// Returns true when an attribute was removed.
         /// </summary>
         public static bool StripSubtree(XElement goElement, Transform source,
-            Dictionary<int, DrivenTransformProperties> driven)
+            Dictionary<EntityId, DrivenTransformProperties> driven)
         {
             var changed = false;
             var flags = Lookup(driven, source);
@@ -191,14 +191,14 @@ namespace UnityPrefabXML
         /// answer is filed under the object of the prefab the caller has in hand.
         /// </summary>
         private static void CollectDriven(Transform instance, Transform source,
-            Dictionary<int, DrivenTransformProperties> map)
+            Dictionary<EntityId, DrivenTransformProperties> map)
         {
             if (instance is RectTransform rect)
             {
                 var driven = (DrivenTransformProperties) DrivenPropertiesProperty.GetValue(rect);
                 if (driven != DrivenTransformProperties.None)
                 {
-                    map[source.GetInstanceID()] = driven;
+                    map[source.GetEntityId()] = driven;
                 }
             }
 

@@ -25,14 +25,14 @@ namespace UnityPrefabXML.Designer
 
         public readonly List<DesignerChange> Changes = new List<DesignerChange>();
 
-        private Dictionary<int, DrivenTransformProperties> _driven;
+        private Dictionary<EntityId, DrivenTransformProperties> _driven;
 
         /// <summary>
         /// What a layout of the designer file takes over, by object. Measured on the first question
         /// and kept for the rest of the run, because the answer costs a preview scene and a layout
         /// pass — a run that asks about nothing but text never pays for it.
         /// </summary>
-        public Dictionary<int, DrivenTransformProperties> Driven =>
+        public Dictionary<EntityId, DrivenTransformProperties> Driven =>
             _driven ?? (_driven = DrivenProperties.MeasureDriven(DesignerPrefab));
 
         public DrivenTransformProperties GetDrivenProperties(Transform source)
@@ -156,7 +156,7 @@ namespace UnityPrefabXML.Designer
 
             var byTarget = modifications
                 .Where(m => m.target != null)
-                .GroupBy(m => m.target.GetInstanceID());
+                .GroupBy(m => m.target.GetEntityId());
 
             foreach (var group in byTarget)
             {
@@ -178,7 +178,7 @@ namespace UnityPrefabXML.Designer
 
         private static DesignerChangeRequest GameObjectRequest(DesignerChangeSet set, GameObject targetGo)
         {
-            set.Context.GoToXml.TryGetValue(targetGo.GetInstanceID(), out var goXml);
+            set.Context.GoToXml.TryGetValue(targetGo.GetEntityId(), out var goXml);
 
             return new DesignerChangeRequest
             {
@@ -191,7 +191,7 @@ namespace UnityPrefabXML.Designer
 
         private static DesignerChangeRequest ComponentRequest(DesignerChangeSet set, Component targetComp)
         {
-            var componentId = targetComp.GetInstanceID();
+            var componentId = targetComp.GetEntityId();
             set.Context.CompToXml.TryGetValue(componentId, out var xmlElement);
             set.Context.CompToVariant.TryGetValue(componentId, out var variantComp);
 
@@ -217,7 +217,7 @@ namespace UnityPrefabXML.Designer
         {
             var parent = targetComp.transform.parent;
             if (parent == null ||
-                !set.Context.GoToXml.TryGetValue(parent.gameObject.GetInstanceID(), out var parentXml))
+                !set.Context.GoToXml.TryGetValue(parent.gameObject.GetEntityId(), out var parentXml))
             {
                 return mods;
             }
@@ -339,7 +339,7 @@ namespace UnityPrefabXML.Designer
                 }
 
                 var baseGoId = set.Context.FindBaseGoIdForVariantGo(comp.gameObject);
-                if (baseGoId == -1 || !set.Context.GoToXml.TryGetValue(baseGoId, out var goXml))
+                if (baseGoId == EntityId.None || !set.Context.GoToXml.TryGetValue(baseGoId, out var goXml))
                 {
                     change.Problem = DesignerChangeProblems.NoXmlObject;
                     set.Changes.Add(change);
@@ -392,7 +392,7 @@ namespace UnityPrefabXML.Designer
                 }
 
                 var baseGoId = set.Context.FindBaseGoIdForVariantTf(go.transform.parent);
-                if (baseGoId == -1 || !set.Context.GoToXml.TryGetValue(baseGoId, out var parentXml))
+                if (baseGoId == EntityId.None || !set.Context.GoToXml.TryGetValue(baseGoId, out var parentXml))
                 {
                     change.Problem = DesignerChangeProblems.NoXmlObject;
                     set.Changes.Add(change);
@@ -427,7 +427,7 @@ namespace UnityPrefabXML.Designer
                     continue;
                 }
 
-                set.Context.CompToXml.TryGetValue(comp.GetInstanceID(), out var xmlElement);
+                set.Context.CompToXml.TryGetValue(comp.GetEntityId(), out var xmlElement);
 
                 set.Changes.Add(new DesignerChange
                 {
@@ -463,7 +463,7 @@ namespace UnityPrefabXML.Designer
                     continue;
                 }
 
-                set.Context.GoToXml.TryGetValue(go.GetInstanceID(), out var xmlElement);
+                set.Context.GoToXml.TryGetValue(go.GetEntityId(), out var xmlElement);
 
                 set.Changes.Add(new DesignerChange
                 {
@@ -491,13 +491,13 @@ namespace UnityPrefabXML.Designer
         private static void CollectChildOrder(DesignerChangeSet set, Transform variantTf,
             Dictionary<XElement, List<PropertyModification>> rootOrderMods)
         {
-            if (set.Context.VariantToXml.TryGetValue(variantTf.GetInstanceID(), out var goElement))
+            if (set.Context.VariantToXml.TryGetValue(variantTf.GetEntityId(), out var goElement))
             {
                 var desired = new List<XElement>();
 
                 for (var i = 0; i < variantTf.childCount; i++)
                 {
-                    if (set.Context.VariantToXml.TryGetValue(variantTf.GetChild(i).GetInstanceID(),
+                    if (set.Context.VariantToXml.TryGetValue(variantTf.GetChild(i).GetEntityId(),
                             out var childElement))
                     {
                         desired.Add(childElement);

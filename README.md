@@ -1,5 +1,10 @@
 # Unity Prefab XML [![Github license](https://img.shields.io/github/license/codewriter-packages/Unity-Prefab-XML.svg?style=flat-square)](#) [![Unity 6000.0](https://img.shields.io/badge/Unity-6000.0+-2296F3.svg?style=flat-square)](#) ![GitHub package.json version](https://img.shields.io/github/package-json/v/codewriter-packages/Unity-Prefab-XML?style=flat-square) 
 
+## Unity 6.6 compatibility
+
+Based on [CodeWriter Unity Prefab XML](https://github.com/codewriter-packages/Unity-Prefab-XML) commit `d27472e1cba38c2826a2fd914fd548bf584bd34d`. Object identity maps and lookups use Unity 6.6 `EntityId`/`GetEntityId`; missing identities use `EntityId.None`. Assembly discovery uses `UnityEngine.Assemblies.CurrentAssemblies.GetLoadedAssemblies()`. Integer component/XML indices are unchanged. Reconcile this patch when adopting an upstream Unity 6.6 compatible release.
+
+
 _XML to Prefab importer for Unity_
 
 A simplified XML format designed for **LLM-driven prefab generation**. Instead of asking AI to produce complex Unity `.prefab` YAML files, you describe your prefab in a compact XML — and Unity imports it as a real prefab. Works with any GameObject hierarchy, including UI.
