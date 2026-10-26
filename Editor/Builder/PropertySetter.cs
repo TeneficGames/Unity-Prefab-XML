@@ -189,7 +189,7 @@ namespace UnityPrefabXML.Builder
             var assemblyName = typeString.Substring(0, spaceIndex);
             var typeName = typeString.Substring(spaceIndex + 1);
 
-            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            foreach (var asm in UnityEngine.Assemblies.CurrentAssemblies.GetLoadedAssemblies())
             {
                 if (asm.GetName().Name == assemblyName)
                 {
@@ -462,7 +462,7 @@ namespace UnityPrefabXML.Builder
                 typeName = typeName.Substring(1);
 
             // Search all assemblies for custom types
-            foreach (var asm in System.AppDomain.CurrentDomain.GetAssemblies())
+            foreach (var asm in UnityEngine.Assemblies.CurrentAssemblies.GetLoadedAssemblies())
             {
                 var type = asm.GetType(typeName);
                 if (type != null) return type;

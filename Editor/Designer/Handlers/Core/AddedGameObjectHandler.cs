@@ -17,7 +17,7 @@ namespace UnityPrefabXML.Designer
 
             if (change.VariantTransform != null)
             {
-                set.Context.VariantToXml[change.VariantTransform.GetInstanceID()] = change.PayloadElement;
+                set.Context.VariantToXml[change.VariantTransform.GetEntityId()] = change.PayloadElement;
             }
         }
     }

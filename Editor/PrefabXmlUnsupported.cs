@@ -149,7 +149,7 @@ namespace UnityPrefabXML
             var self = typeof(PrefabXmlUnsupportedAttribute).Assembly;
             var selfName = self.GetName().Name;
 
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            foreach (var assembly in UnityEngine.Assemblies.CurrentAssemblies.GetLoadedAssemblies())
             {
                 // Only an assembly that can name the attribute can carry it, and the reference is
                 // the cheap way to ask — reading the attributes of every assembly of the domain
